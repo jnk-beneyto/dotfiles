@@ -1,0 +1,33 @@
+# gh/config.yml → ~/.config/gh/config.yml (symlink created by install.sh).
+#
+# SHARED GitHub CLI config. `gh auth login` tokens live in
+# ~/.config/gh/hosts.yml: NOT versioned nor touched (gh creates them).
+#
+# See everything:  gh config list  ·  Change something:  gh config set <key> <value>
+version: 1
+
+# Protocol for clone/push with gh: https | ssh
+git_protocol: https
+
+# Editor for issues, PRs… ; blank → the shell's $EDITOR.
+editor:
+
+# Interactive prompts (enabled | disabled).
+prompt: enabled
+prefer_editor_prompt: disabled
+
+# Pager for long output; blank → $PAGER (less).
+pager:
+
+# Aliases: short names for subcommands (e.g. `gh co 123` → pr checkout).
+aliases:
+    co: pr checkout
+
+# gh default settings (docs: gh help environment).
+http_unix_socket:
+browser:
+clipboard: enabled
+color_labels: disabled
+accessible_colors: disabled
+accessible_prompter: disabled
+spinner: enabled

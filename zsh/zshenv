@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ~/.zshenv — ALWAYS loaded (login and non-login, interactive and scripts).
+# Keep it minimal: if something fails here, it breaks EVERY zsh (including
+# those launched by other tools). Per-machine stuff: ~/.zshenv.local.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Base XDG directories (many tools respect them: git, bat, opencode…).
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+
+# Per-machine customizations (not versioned).
+if [[ -f "$HOME/.zshenv.local" ]]; then
+  source "$HOME/.zshenv.local"
+fi

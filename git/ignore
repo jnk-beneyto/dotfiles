@@ -1,0 +1,23 @@
+# git/ignore → ~/.config/git/ignore (symlink created by install.sh).
+# Globally ignored in ALL repos (via core.excludesFile).
+# Handy for junk you don't want to add to every project's .gitignore.
+
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+*.swp
+*.swo
+*~
+.idea/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temp files
+*.log
+*.tmp

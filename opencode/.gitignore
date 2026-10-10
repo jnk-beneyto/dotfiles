@@ -1,0 +1,8 @@
+# Per-machine / runtime files managed by opencode — NEVER commit:
+service.json          # authentication token/password
+*.bak
+node_modules/
+package.json
+package-lock.json
+bun.lock
+opencode-quota/       # quota plugin cache

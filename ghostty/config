@@ -1,0 +1,34 @@
+# ─────────────────────────────────────
+# Ghostty
+# ─────────────────────────────────────
+
+# Theme — same scheme as WezTerm (Tokyo Night), following the system
+# light/dark mode. That way Ghostty and WezTerm look the same on any machine.
+theme = light:TokyoNight Day,dark:TokyoNight
+
+# Font
+font-family = JetBrains Mono
+font-size = 14
+
+# Window
+window-padding-x = 12
+window-padding-y = 10
+window-padding-balance = true
+
+# Cursor
+cursor-style = block
+cursor-style-blink = true
+
+# Scroll
+scrollback-limit = 10000
+
+# Appearance
+background-opacity = 0.96
+background-blur = true
+
+# Tabs
+macos-titlebar-style = tabs
+window-save-state = always
+
+# Shell
+shell-integration = detect

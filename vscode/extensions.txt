@@ -1,0 +1,68 @@
+# VS Code extensions — one per line: publisher.name (no version: the latest one is installed).
+# An optional comment separated by spaces can follow the id: id  # what it is for.
+# Installed with the installer (install.sh) via: code --install-extension <id>
+alefragnani.project-manager
+astro-build.astro-vscode
+bmewburn.vscode-intelephense-client
+bradlc.vscode-tailwindcss
+burkeholland.simple-react-snippets
+chakrounanas.turbo-console-log
+christian-kohler.path-intellisense
+codeium.codeium
+dbaeumer.vscode-eslint
+discountry.react-redux-react-router-snippets
+docker.docker
+dsznajder.es7-react-js-snippets
+eamodio.gitlens
+editorconfig.editorconfig    # respects each repo's .editorconfig
+esbenp.prettier-vscode
+fallenmax.mithril-emmet
+formulahendry.auto-close-tag
+formulahendry.auto-rename-tag
+formulahendry.code-runner
+glenn2223.live-sass
+grapecity.gc-excelviewer
+humao.rest-client
+infeng.vscode-react-typescript
+jackiotyu.git-worktree-manager
+joshjg.generate-react-component
+mariusalchimavicius.json-to-ts
+mhutchie.git-graph
+mikehanson.auto-barrel
+mikestead.dotenv
+mongodb.mongodb-vscode
+ms-azuretools.vscode-containers
+ms-azuretools.vscode-docker
+ms-ceintl.vscode-language-pack-es
+ms-dotnettools.vscode-dotnet-runtime
+ms-dynamics-smb.al
+ms-mssql.data-workspace-vscode
+ms-mssql.mssql
+ms-mssql.sql-bindings-vscode
+ms-mssql.sql-database-projects-vscode
+mtxr.sqltools
+mtxr.sqltools-driver-mysql
+nucllear.vscode-extension-auto-import
+pkief.material-icon-theme
+pmneo.tsimporter
+pranaygp.vscode-css-peek
+rangav.vscode-thunder-client
+redhat.vscode-yaml
+ritwickdey.liveserver
+seatonjiang.gitmoji-vscode
+shyykoserhiy.git-autoconfig
+sonarsource.sonarlint-vscode
+standard.vscode-standard
+steoates.autoimport
+streetsidesoftware.code-spell-checker   # typos in strings/comments
+stylelint.vscode-stylelint              # linter for CSS/SCSS
+syrahdu.vitest-explorer                 # Vitest panel (if the project uses it)
+teamchilla.blueprint
+thekalinga.bootstrap4-vscode
+usernamehw.errorlens       # errors/warnings highlighted on the line
+vscode-icons-team.vscode-icons
+wayou.vscode-todo-highlight
+xabikos.reactsnippets
+yoavbls.pretty-ts-errors   # readable TypeScript errors
+zhuangtongfa.material-theme
+zignd.html-css-class-completion

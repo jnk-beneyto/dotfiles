@@ -1,0 +1,9 @@
+# Installer backups (created in the home, never in the repo, just in case)
+*.bak.*
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini

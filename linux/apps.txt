@@ -1,0 +1,38 @@
+# linux/apps.txt — Linux apps for this dotfile (one id per line).
+#
+# The list is only the selection: it's linux/install-apps.sh that maps each id
+# to the package/repo of the detected distro (apt · dnf · pacman · zypper).
+# Comment out (or delete) a line to skip installing it.
+# Format:  id<spaces># comment   ← the comment is optional.
+
+# ── Productivity and communication ───────────────────────────────────────────
+1password        # password manager (apt: official .deb · dnf: RPM repo · Arch: AUR)
+obsidian         # official AppImage (markdown notes)
+spotify          # flatpak com.spotify.Client
+telegram         # 'telegram-desktop' if the distro ships it (Arch); otherwise Flathub
+discord          # official .deb/.rpm from discord.com (Arch: extra repo)
+google-chrome    # official Google repo
+brave-browser    # official Brave repo (apt/dnf) · Arch: AUR 'brave-bin'
+notion           # UNOFFICIAL client via AppImage (jcorbalanm/notion-appimage)
+whatsapp         # no official client → notice with PWA (web.whatsapp.com)
+
+# ── Development ──────────────────────────────────────────────────────────────
+docker           # engine + CLI + compose plugin (get.docker.com / distro)
+gh               # GitHub CLI ('gh' on apt/dnf, 'github-cli' on Arch)
+ollama           # official script from ollama.com
+tableplus        # TablePlus apt/dnf repo (Arch: AUR)
+vscode           # official Microsoft repo (Arch: 'code' in extra)
+ghostty          # apt / PPA / community .deb (Debian) / COPR / pacman by distro
+wezterm          # AppImage from GitHub Releases
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+tiling           # window shortcuts: Tiling Assistant (GNOME) / KWin (KDE)
+ulauncher        # Alfred-style launcher (apt: official .deb · dnf: repos · pacman: AUR)
+balenaetcher     # official .deb/.rpm from GitHub Releases
+unzip            # unzip + 7zip/p7zip + unar
+
+# ── CLI ──────────────────────────────────────────────────────────────────────
+htop             # process monitor
+tree             # directory tree
+yt-dlp           # via pipx (the apt one is outdated)
+ffmpeg           # multimedia conversion (Fedora packages it as 'ffmpeg-free')

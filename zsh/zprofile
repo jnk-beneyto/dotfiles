@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ~/.zprofile — loaded in login shells (macOS Terminal, SSH…).
+# PATH and environment that must exist before the interactive session go here.
+# Per-machine stuff: ~/.zprofile.local.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Homebrew — Apple Silicon (/opt/homebrew), Intel (/usr/local) and Linuxbrew.
+# Puts brew and its tools on the PATH on macOS and Linux.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# No brew prompts: by default `brew install/upgrade/reinstall` asks
+# "Do you want to proceed with the installation? [y/n]" if the plan brings
+# dependencies; with this it prints the plan and carries on without asking.
+export HOMEBREW_NO_ASK=1
+
+# Linux — same "no questions": the scripts already pass -y/--noconfirm; this
+# covers debconf (tzdata, needrestart…) outside of sudo. sudo cleans the
+# environment, so lib/platform.sh also installs /etc/sudoers.d/dotfiles-debconf
+# (env_keep) and /etc/apt/apt.conf.d/90-dotfiles, which cover the sudo path.
+if [[ "$(uname -s)" == "Linux" ]]; then
+  export DEBIAN_FRONTEND=noninteractive
+  export NEEDRESTART_MODE=a
+fi
+
+# User paths ahead of the system PATH (whether they exist or not).
+[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
+[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
+export PATH
+
+# Per-machine customizations (not versioned).
+if [[ -f "$HOME/.zprofile.local" ]]; then
+  source "$HOME/.zprofile.local"
+fi

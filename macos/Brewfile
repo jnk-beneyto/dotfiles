@@ -1,0 +1,59 @@
+# macos/Brewfile — macOS apps for this dotfile.
+#
+# Install:          ./macos/install-apps.sh        (or: brew bundle install --file=macos/Brewfile)
+# See what's left:  brew bundle check --file=macos/Brewfile
+# Add/remove:       edit this file (one entry per line) and re-run.
+#
+# brew bundle is idempotent: it only installs what's missing, never touches what's
+# already installed, and never uninstalls anything not in the list.
+
+# ── CLI (formulas) ───────────────────────────────────────────────────────────
+brew "bat"         # `cat` with syntax highlighting
+brew "docker"      # CLI client (the GUI is the docker-desktop cask)
+brew "eza"         # modern `ls` (used by the zsh/aliases aliases)
+brew "fd"          # simple, fast `find`
+brew "ffmpeg"      # media conversion
+brew "fzf"         # fuzzy search in the terminal
+brew "gh"          # GitHub CLI
+brew "git-delta"   # git diff pager
+brew "htop"        # process monitor
+brew "jq"          # JSON in the terminal
+brew "mas"         # App Store installer (used by install-apps.sh)
+brew "pnpm"        # package manager (React/Next.js; see install.sh on Linux)
+brew "ripgrep"     # fast `grep` (rg)
+brew "shellcheck"  # shell script linter
+brew "shfmt"       # formats shell scripts
+brew "stylua"      # formats Lua (WezTerm config)
+brew "tree"        # directory tree
+brew "wget"        # HTTP(S) downloads
+brew "yq"          # YAML/JSON (like jq, but for YAML)
+brew "yt-dlp"      # video/audio downloads
+brew "zoxide"      # smart `cd` (remembers your directories)
+
+# ── Apps (casks) ─────────────────────────────────────────────────────────────
+cask "1password"             # password manager
+cask "alfred"                # app launcher and workflows (universal: Intel and ARM)
+cask "balenaetcher"          # USB image flasher
+cask "brave-browser"         # browser
+cask "discord"               # chat
+cask "docker-desktop"        # containers (GUI)
+cask "font-jetbrains-mono-nerd-font"  # font for Ghostty/WezTerm and p10k
+cask "ghostty"               # terminal
+cask "google-chrome"         # browser
+cask "notion"                # notes / databases
+cask "obsidian"              # markdown notes
+cask "ollama-app"            # Ollama desktop app (local LLMs)
+cask "rectangle"             # window management
+cask "spotify"               # music
+cask "tableplus"             # database client
+cask "telegram-desktop"      # messaging
+cask "visual-studio-code"    # editor
+cask "wezterm"               # terminal
+cask "whatsapp"              # messaging
+
+# ── App Store (managed by install-apps.sh via `mas`) ─────────────────────────
+# Requires being signed in to the App Store.
+#   Unzip - RAR ZIP 7Z Unarchiver → id 1537056818
+
+# ── App Store only (no cask) ─────────────────────────────────────────────────
+#   Xcode → App Store (or: mas install 497799835)

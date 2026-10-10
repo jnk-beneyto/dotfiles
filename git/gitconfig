@@ -1,0 +1,90 @@
+# git/gitconfig → ~/.gitconfig (symlink created by install.sh).
+#
+# SHARED config across all machines. Identity (name/email) and anything
+# machine-specific go in ~/.gitconfig.local, which is NOT in the repo and is
+# included below. install.sh creates it from
+# git/gitconfig.local.example if it doesn't exist.
+
+[include]
+	path = ~/.gitconfig.local
+
+[init]
+	defaultBranch = main
+
+[core]
+	# Globally ignore generated files (OS, editors, secrets, logs…).
+	excludesFile = ~/.config/git/ignore
+	# Normalize line endings to LF inside the repository.
+	autocrlf = input
+	# Performance: built-in watching daemon + untracked cache.
+	fsmonitor = true
+	untrackedCache = true
+	# Pager: git-delta. If it isn't installed (install.sh warns about it),
+	# git shows the output unpaged instead of failing.
+	pager = delta
+
+[color]
+	ui = auto
+
+[push]
+	# `git push` with no arguments on a new branch creates its upstream.
+	autoSetupRemote = true
+	# Always push to the branch with the same name (pairs with autoSetupRemote).
+	default = current
+
+[pull]
+	rebase = true
+
+[fetch]
+	prune = true
+	# Also delete tags that no longer exist on the remote.
+	pruneTags = true
+
+[rebase]
+	autosquash = true
+	autostash = true
+	# When rebasing, update local branches that pointed at the rebased commits.
+	updateRefs = true
+
+[merge]
+	conflictstyle = zdiff3
+
+[diff]
+	algorithm = histogram
+	# Highlight moved blocks with 'zebra' (more visible than 'default').
+	colorMoved = zebra
+
+# git-delta — syntax-highlighted diffs in `git add -p` / `git diff -p`
+# (the pager above sends log/diff to screen; this one, the interactive view).
+# https://github.com/dandavison/delta
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true      # n / p → next / previous file in a long diff
+	line-numbers = true
+	# side-by-side = true  # uncomment to see both sides in parallel
+
+[rerere]
+	enabled = true
+	# Save the resolution and update the index when the conflict recurs.
+	autoupdate = true
+
+[help]
+	# `git status` (or any typo) → corrected after 1 s ('immediate' = now).
+	autoCorrect = 10
+
+[column]
+	ui = auto
+
+[branch]
+	# Recent branches first (default is alphabetical order).
+	sort = -committerdate
+
+[tag]
+	# v1.2.0 before v1.10.0.
+	sort = version:refname
+
+# No [alias]: git aliases live in zsh (oh-my-zsh `git` plugin, see
+# plugins= in zsh/zshrc → gst, gcm, gco, gd, gclean…). If you need one of
+# your own, put it in zsh/aliases.

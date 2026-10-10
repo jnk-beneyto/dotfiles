@@ -1,0 +1,9 @@
+# git/gitconfig.local.example → copied to ~/.gitconfig.local (which is NOT versioned).
+#
+# install.sh creates it the first time. Edit it with YOUR git identity; that way
+# the shared gitconfig carries no personal data and each machine keeps its own.
+# You can add any machine-specific settings here.
+
+[user]
+	name = Your Name
+	email = you@email.com

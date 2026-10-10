@@ -1,0 +1,26 @@
+[
+  {
+    "key": "shift+alt+s",
+    "command": "editor.action.sortLinesAscending"
+  },
+  {
+    "key": "ctrl+shift+s",
+    "command": "git.stageAll"
+  },
+  {
+    "key": "ctrl+shift+u",
+    "command": "git.unstageAll"
+  },
+  {
+    "key": "ctrl+shift+d",
+    "command": "git.cleanAll"
+  },
+  {
+    "key": "ctrl+shift+l",
+    "command": "git.stashApplyLatest"
+  },
+  {
+    "key": "ctrl+shift+a",
+    "command": "git.mergeAbort"
+  }
+]
