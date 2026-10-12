@@ -28,10 +28,21 @@ if [[ "$(uname -s)" == "Linux" ]]; then
   export NEEDRESTART_MODE=a
 fi
 
-# User paths ahead of the system PATH (whether they exist or not).
-[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
-[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
-export PATH
+# User paths + Homebrew, all of it in one list: zsh/path (sourced via the real
+# path of this file — ~/.zprofile is a symlink into the repo — the same way the
+# zshrc sources the aliases). Covers non-interactive login shells too.
+_zsrc="${ZDOTDIR:-$HOME}/.zprofile"
+_zdir="${_zsrc:A:h}"
+if [[ -r "$_zdir/path" ]]; then
+  source "$_zdir/path"
+else
+  # No repo on this machine: at least keep the user's own binaries reachable.
+  typeset -U path
+  [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" ${path:#$HOME/.local/bin})
+  [[ -d "$HOME/bin" ]] && path=("$HOME/bin" ${path:#$HOME/bin})
+  export PATH
+fi
+unset _zsrc _zdir
 
 # Per-machine customizations (not versioned).
 if [[ -f "$HOME/.zprofile.local" ]]; then

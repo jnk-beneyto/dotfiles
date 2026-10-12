@@ -12,6 +12,16 @@ fi
 export ZSH="$HOME/.oh-my-zsh"
 export NVM_DIR="$HOME/.nvm"
 
+# PATH — everything in one list, shared with ~/.zprofile: zsh/path (next to
+# this file; ~/.zshrc is a symlink into the repo, so the real path points at
+# the repo's zsh/ dir). Loaded here as well, before the plugins below, so the
+# ones that check for a command (`fzf`) see it: this covers the interactive
+# shells that never load the login env (tmux panes, `zsh` inside a session).
+_zsrc="${ZDOTDIR:-$HOME}/.zshrc"
+_zdir="${_zsrc:A:h}"
+[[ -r "$_zdir/path" ]] && source "$_zdir/path"
+unset _zsrc _zdir
+
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -101,28 +111,10 @@ setopt INTERACTIVE_COMMENTS   # allow # comments on the command line
 
 source $ZSH/oh-my-zsh.sh
 
-# nvm: lazy loading — nvm.sh took ~640 ms on every startup.
-# node goes straight onto the PATH (without invoking nvm); nvm.sh is only
-# loaded the first time you use `nvm` (to switch versions, etc.).
-# The version resolves on its own — works on macOS and Linux, with nvm from
-# brew or git: first the `default` alias if it's concrete (vX.Y.Z or "22"),
-# otherwise the highest installed one. To pin another version: nvm alias default <version>.
-_node_bin=""
-if [[ -r "$NVM_DIR/alias/default" ]]; then
-  _nvm_default="$(<"$NVM_DIR/alias/default")"
-  if [[ "$_nvm_default" == v* && -d "$NVM_DIR/versions/node/$_nvm_default" ]]; then
-    _node_bin="$NVM_DIR/versions/node/$_nvm_default/bin"
-  elif [[ "$_nvm_default" == [0-9]* ]]; then
-    # "22" or numeric "lts/*": the highest in that v22.* series
-    _node_bin="$(print -rl -- $NVM_DIR/versions/node/v$_nvm_default.*/bin(N[-1]))"
-  fi
-fi
-if [[ -z "$_node_bin" ]]; then
-  _node_bin="$(print -rl -- $NVM_DIR/versions/node/*/bin(N[-1]))"  # highest
-fi
-[[ -n "$_node_bin" && -x "$_node_bin/node" ]] && path=("$_node_bin" $path)
-unset _node_bin _nvm_default
-
+# nvm: lazy loading — nvm.sh took ~640 ms on every startup. node itself is
+# already on the PATH (zsh/path resolves the default version: the `default`
+# alias or the highest installed); nvm.sh is only loaded the first time you
+# use `nvm` (to switch versions, etc.).
 nvm() {
   unset -f nvm
   local nvm_sh=""
@@ -173,12 +165,6 @@ bindkey '^H'      backward-kill-word    # Ctrl+Backspace
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# mysql-client (only if present; Intel=/usr/local, Apple Silicon=/opt/homebrew)
-for _p in /usr/local/opt/mysql-client/bin /opt/homebrew/opt/mysql-client/bin; do
-  [[ -d "$_p" ]] && PATH="$_p:$PATH"
-done
-unset _p
-export PATH
 
 # User aliases — dotfiles/zsh/aliases, next to this zshrc (which is a
 # symlink to the repo). Resolved via the real path of .zshrc; if the aliases
@@ -188,19 +174,10 @@ _aliases_dir="${_zsrc:A:h}"
 [[ -f "$_aliases_dir/aliases" ]] && source "$_aliases_dir/aliases"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# bun completions
+# bun completions (the bin dir on the PATH and $BUN_INSTALL come from zsh/path).
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-[[ -d "$BUN_INSTALL/bin" ]] && export PATH="$BUN_INSTALL/bin:$PATH"
-
-# Added by Antigravity
-[[ -d "$HOME/.antigravity/antigravity/bin" ]] && \
-  export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
-
-# opencode
-[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+# opencode — CLI on PATH via zsh/path ($HOME/.opencode/bin).
 
 # powerlevel10k — active config (the standard line that adds the p10k wizard).
 # ~/.p10k.zsh is a symlink to the current theme; themes live in ~/.config/p10k/.

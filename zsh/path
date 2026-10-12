@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# zsh/path — the whole PATH in one list (sourced by ~/.zprofile AND ~/.zshrc).
+#
+# Every directory where this dotfile — or the apps it installs — leaves a
+# binary. They go in front of the system's, in this order of precedence: the
+# first one listed below is the one that ends up first on PATH (the list is
+# prepended in reverse so it can be read top to bottom). Each entry is added
+# only if its directory exists and only once: `typeset -U path` keeps the first
+# occurrence, so running this from both files never duplicates anything.
+# Per-machine extras: ~/.zshenv.local · ~/.zprofile.local · ~/.zshrc.local.
+# ─────────────────────────────────────────────────────────────────────────────
+
+typeset -U path
+
+# Homebrew — Apple Silicon (/opt/homebrew), Intel (/usr/local) and Linuxbrew.
+# `brew shellenv` exports PATH, MANPATH and INFOPATH for the prefix it finds.
+# It goes first because the user directories below are prepended after it and
+# must win over the kegs. It's also in zprofile (a login file); doing it here
+# too covers the shells that never load the login env (tmux panes, `zsh`
+# inside a session).
+if ! (( $+commands[brew] )); then
+  for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    [[ -x "$_brew" ]] && { eval "$("$_brew" shellenv)"; break }
+  done
+  unset _brew
+fi
+
+# bun — its bin dir is in the list below; $BUN_INSTALL points at the root
+# (bun itself and its completions read it).
+export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+
+# node (nvm) — the bin dir depends on the installed version, so it can't be a
+# static entry. The version resolves on its own — works on macOS and Linux,
+# with nvm from brew or git: first the `default` alias if it's concrete
+# (vX.Y.Z or "22"), otherwise the highest installed one. To pin another
+# version: nvm alias default <version>.
+_nvm_dir="${NVM_DIR:-$HOME/.nvm}"
+_node_bin=""
+if [[ -r "$_nvm_dir/alias/default" ]]; then
+  _nvm_default="$(<"$_nvm_dir/alias/default")"
+  if [[ "$_nvm_default" == v* && -d "$_nvm_dir/versions/node/$_nvm_default" ]]; then
+    _node_bin="$_nvm_dir/versions/node/$_nvm_default/bin"
+  elif [[ "$_nvm_default" == [0-9]* ]]; then
+    # "22" or numeric "lts/*": the highest in that v22.* series
+    _node_bin="$(print -rl -- $_nvm_dir/versions/node/v$_nvm_default.*/bin(N[-1]))"
+  fi
+fi
+if [[ -z "$_node_bin" ]]; then
+  _node_bin="$(print -rl -- $_nvm_dir/versions/node/*/bin(N[-1]))"  # highest
+fi
+
+# Precedence list: first listed = first on PATH.
+_path_dirs=(
+  "$_node_bin"                          # node/npm/npx (nvm: default alias or highest)
+  /usr/local/opt/mysql-client/bin       # mysql-client (Homebrew, Intel Mac)
+  /opt/homebrew/opt/mysql-client/bin    # mysql-client (Homebrew, Apple Silicon)
+  "$HOME/.local/bin"      # pipx apps (yt-dlp) · AppImage menus (obsidian, wezterm)
+  "$HOME/bin"             # personal scripts
+  "$HOME/.opencode/bin"   # opencode CLI
+  "$HOME/.bun/bin"        # bun ($BUN_INSTALL is exported above)
+  "$HOME/.cargo/bin"      # cargo/rust (not installed by the dotfile, but common)
+  "$HOME/.antigravity/antigravity/bin"      # Antigravity
+  "$HOME/.local/share/pnpm"                 # pnpm standalone (`npm i -g pnpm` goes to node's bin)
+  "$HOME/.local/share/flatpak/exports/bin"  # flatpak apps (spotify, telegram)
+)
+for ((_i = $#_path_dirs; _i >= 1; _i--)); do
+  _d="${_path_dirs[$_i]}"
+  [[ -d "$_d" ]] && path=("$_d" ${path:#$_d})
+done
+
+export PATH
+unset _path_dirs _i _d _nvm_dir _node_bin _nvm_default

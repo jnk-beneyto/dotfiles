@@ -12,6 +12,7 @@ powerlevel10k + Ghostty + WezTerm + git.
 | `zsh/zshenv` | `~/.zshenv` (minimal environment; always loaded) |
 | `zsh/zprofile` | `~/.zprofile` (login: Homebrew on `PATH`; non-interactive — `HOMEBREW_NO_ASK=1` and, on Linux, `DEBIAN_FRONTEND=noninteractive`/`NEEDRESTART_MODE=a`) |
 | `zsh/zshrc` | `~/.zshrc` |
+| `zsh/path` | the whole `PATH` in one list (node via nvm · `~/.local/bin`, `~/.opencode/bin`, `~/.cargo/bin`… · mysql-client · flatpak) + `BUN_INSTALL`; loaded by `zprofile` **and** `zshrc` from the repo (not symlinked separately) → § [PATH and exports](#path-and-exports) |
 | `zsh/aliases` | user aliases; loaded by `zsh/zshrc` from the repo (not symlinked separately) |
 | `git/gitconfig` | `~/.gitconfig` (shared: settings, `core.excludesFile` and the **git-delta** pager; git aliases come from oh-my-zsh's `git` plugin) |
 | `git/ignore` | `~/.config/git/ignore` (global git ignores) |
@@ -59,6 +60,47 @@ Example `~/.gitconfig.local` (your identity; not versioned):
 	name = Tu Nombre
 	email = tu@email.com
 ```
+
+### PATH and exports
+
+Every export the config does lives in one of three versioned files, and all
+of them load automatically in **every** zsh (login, interactive and scripts):
+
+| File | What it exports |
+|---|---|
+| `zsh/zshenv` | `XDG_CONFIG_HOME` · `XDG_CACHE_HOME` · `XDG_DATA_HOME` · `XDG_STATE_HOME` |
+| `zsh/zprofile` | Homebrew (`brew shellenv`: `PATH`, `MANPATH`, `INFOPATH`), `HOMEBREW_NO_ASK`, and on Linux `DEBIAN_FRONTEND`/`NEEDRESTART_MODE` |
+| `zsh/path` | the whole `PATH` in order of precedence — node (nvm) · mysql-client · `~/.local/bin` · `~/bin` · `~/.opencode/bin` · `~/.bun/bin` · `~/.cargo/bin` · pnpm · flatpak… — and `BUN_INSTALL` |
+
+`zsh/path` is sourced by **both** `zprofile` (login shells: new terminals,
+SSH, scripts) and `zshrc` (interactive shells: tmux panes, a `zsh` inside a
+session), and each directory is added only if it exists and only once — so
+on a new terminal there's **nothing to export by hand**: just open it.
+
+**To apply a change in an already-open shell** (after editing any of the
+three files):
+
+```sh
+exec zsh -l    # re-runs zshenv → zprofile → zshrc in place
+```
+
+or, without leaving the session:
+
+```sh
+source ~/.zshenv; source ~/.zprofile; source ~/.zshrc
+```
+
+**To check that everything is exported**:
+
+```zsh
+echo $PATH | tr ':' '\n'                     # every dir, in order (first = wins)
+whence -v node npm opencode eza fzf delta    # the tools the config needs resolve
+```
+
+**A new tool installs a binary somewhere else?** Add one line to the
+`_path_dirs` list in `zsh/path`, at the position matching its precedence
+(first listed = first on `PATH`), and it's exported in every shell from
+then on — no other file to touch.
 
 ## Requirements
 
@@ -263,27 +305,25 @@ OS installs them, and whether any need config:
 | Obsidian | ✓ | ✓ | — |
 | Spotify | ✓ | ✓ | — |
 | Telegram | ✓ | ✓ | — |
-| Discord | ✓ | ✓ | — |
+| Discord | ✓ | ✗ | — |
 | Google Chrome | ✓ | ✓ | — |
-| Brave Browser | ✓ | ✓ | — |
-| Notion | ✓ | ✓ | — |
-| WhatsApp | ✓ | ✓ | [yes](#whatsapp) |
+| Brave Browser | ✓ | ✗ | — |
+| Notion | ✓ | ✗ | — |
+| WhatsApp | ✓ | ✗ | [yes](#whatsapp) |
 | **Development** | | | |
 | Docker (CLI + Desktop) | ✓ | ✓ | — |
 | gh | ✓ | ✓ | [yes](#gh) |
-| Ollama | ✓ | ✓ | — |
+| Ollama | ✓ | ✗ | — |
 | opencode | ✓³ | ✓³ | [yes](#opencode) |
 | TablePlus | ✓ | ✓ | — |
-| VS Code | ✓ | ✓ | [yes](#vs-code) |
+| VS Code | ✓ | ✗ | [yes](#vs-code) |
 | Ghostty | ✓ | ✓ | [yes](#ghostty) |
 | WezTerm | ✓ | ✓ | [yes](#wezterm) |
 | **Utilities** | | | |
 | Alfred | ✓ | ✗ | — |
-| Ulauncher | ✗ | ✓ | — |
 | Rectangle | ✓ | ✗ | — |
-| Tiling | ✗ | ✓ | [yes](#tiling) |
 | Balena Etcher | ✓ | ✓ | — |
-| Unzip | ✓ | ✓ | — |
+| Unzip | ✓ | ✗ | — |
 | JetBrains Mono (Nerd Font) | ✓ | ✗² | — |
 | **CLI** | | | |
 | htop | ✓ | ✓ | — |
@@ -374,17 +414,6 @@ you run `./install.sh`— and the remaining manual steps. The links in the
 #### WhatsApp
 
 - **macOS**: official cask, no config.
-- **Linux**: no official client → the installer warns: open
-  [web.whatsapp.com](https://web.whatsapp.com) and use *Install app* (PWA).
-
-#### Tiling
-
-- **macOS**: Rectangle with the OS's native shortcuts; no config in the
-  repo.
-- **Linux**: provided by the desktop (KWin/GNOME). On GNOME, the
-  [Tiling Assistant](https://extensions.gnome.org/extension/7341/tiling-assistant/)
-  extension is recommended —the installer shows the warning with the
-  link—; on KDE, KWin already ships shortcuts.
 
 ### System preferences (macOS)
 
