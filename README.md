@@ -161,6 +161,13 @@ symlinks point to) and then installs the config, the tools and the apps:
 curl -sSL https://raw.githubusercontent.com/jnk-beneyto/dotfiles/main/install.sh | bash
 ```
 
+Config, tools and symlinks only, **without installing the apps** (same
+command; the flag goes after the pipe, not before `curl`):
+
+```sh
+curl -sSL https://raw.githubusercontent.com/jnk-beneyto/dotfiles/main/install.sh | DOTFILES_SKIP_APPS=1 bash
+```
+
 It uses `git` when available (so `~/dotfiles` is a real clone you can
 `git pull`); if `git` is missing it falls back to a tarball with
 `curl`/`wget`. A different destination:
@@ -198,8 +205,8 @@ curl -sSL https://raw.githubusercontent.com/jnk-beneyto/dotfiles/main/install.sh
 Options go **after the pipe** (they are passed to `bash`, not to `curl`):
 
 ```sh
-curl -sSL …/install.sh | DOTFILES_SKIP_APPS=1 bash          # config only, no apps
-curl -sSL …/install.sh | DOTFILES_NODE_VERSION=v20.12.2 bash
+curl -sSL https://raw.githubusercontent.com/jnk-beneyto/dotfiles/main/install.sh | DOTFILES_SKIP_APPS=1 bash       # config only, no apps
+curl -sSL https://raw.githubusercontent.com/jnk-beneyto/dotfiles/main/install.sh | DOTFILES_NODE_VERSION=v20.12.2 bash
 ```
 
 <details>
@@ -209,6 +216,8 @@ curl -sSL …/install.sh | DOTFILES_NODE_VERSION=v20.12.2 bash
 git clone https://github.com/jnk-beneyto/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
+
+DOTFILES_SKIP_APPS=1 ./install.sh   # the same, without the apps
 ```
 
 </details>
