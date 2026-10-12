@@ -25,5 +25,6 @@ balenaetcher     # official .deb/.rpm from GitHub Releases
 # ── CLI ──────────────────────────────────────────────────────────────────────
 htop             # process monitor
 tree             # directory tree
+tmux             # terminal multiplexer (panes/tabs; inherits the zsh PATH)
 yt-dlp           # via pipx (the apt one is outdated)
 ffmpeg           # multimedia conversion (Fedora packages it as 'ffmpeg-free')

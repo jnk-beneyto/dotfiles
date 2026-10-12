@@ -126,6 +126,10 @@ Everything the config needs is installed automatically when you run it
 | `oh-my-zsh` | `zshrc` runs `source $ZSH/oh-my-zsh.sh` | clones it; **if unavailable, errors and stops** before symlinking `~/.zshrc` |
 | `powerlevel10k`, `zsh-autosuggestions`, `zsh-syntax-highlighting` | the `zshrc` theme and plugins | warns (offline?) |
 | `nvm` + `node` | node PATH and the `nrd` alias (`npm run dev`) | warns and continues |
+| `direnv` | per-project env vars (`.envrc`), hooked in the `zshrc` | warns and continues |
+| `uv` + `python` | the python toolchain: versions, projects, venvs and pip (`uv run`, `uv pip`) | warns and continues |
+| compilers (`build-essential`) | building native npm/pip modules (node-gyp, psycopg2…) | warns and continues |
+| `tmux` | terminal multiplexer | warns and continues |
 | JetBrains Mono (Nerd Font) | `ghostty/config` + p10k icons | warns (installed via brew on macOS) |
 | VS Code extensions | from `vscode/extensions.txt` | warns with manual instructions |
 
@@ -134,11 +138,12 @@ Warned only (not auto-installed because its setup requires sudo):
 installs it first. Platform apps —Ghostty,
 WezTerm, VS Code…— are installed at the end, from their lists (see § Apps).
 
-The default node version it installs is `v22.17.1`; you can change it
-without editing the script:
+The default node version it installs is `v22.17.1` and the python one, `3.13`;
+you can change either without editing the script:
 
 ```sh
 DOTFILES_NODE_VERSION=v20.12.2 ./install.sh
+DOTFILES_PYTHON_VERSION=3.12 ./install.sh
 ```
 
 ## Installation
@@ -316,6 +321,7 @@ OS installs them, and whether any need config:
 | Ollama | ✓ | ✗ | — |
 | opencode | ✓³ | ✓³ | [yes](#opencode) |
 | TablePlus | ✓ | ✓ | — |
+| uv (python) | ✓ | ✓¹ | — |
 | VS Code | ✓ | ✗ | [yes](#vs-code) |
 | Ghostty | ✓ | ✓ | [yes](#ghostty) |
 | WezTerm | ✓ | ✓ | [yes](#wezterm) |
@@ -328,6 +334,8 @@ OS installs them, and whether any need config:
 | **CLI** | | | |
 | htop | ✓ | ✓ | — |
 | tree | ✓ | ✓ | — |
+| tmux | ✓ | ✓ | — |
+| direnv | ✓ | ✓¹ | — |
 | yt-dlp | ✓ | ✓ | — |
 | ffmpeg | ✓ | ✓ | — |
 | eza | ✓ | ✓¹ | — |
@@ -348,8 +356,8 @@ OS installs them, and whether any need config:
 
 - `✓` = the app is installed on that OS (`Brewfile` · `apps.txt` ·
   `install.sh`); `✗` = not in that OS's list.
-- ¹ On Linux, `eza`, `fzf`, `git-delta` and `pnpm` are provided by
-  `install.sh` (they're not in `linux/apps.txt`).
+- ¹ On Linux, `eza`, `fzf`, `git-delta`, `pnpm`, `direnv` and `uv` are provided
+  by `install.sh` (they're not in `linux/apps.txt`).
 - ² On Linux the font isn't auto-installed: `install.sh` warns with a link
   to Nerd Fonts (on macOS the Brewfile provides it).
 - ³ `opencode` isn't in the lists: it's installed via the final block in

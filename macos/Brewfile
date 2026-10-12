@@ -9,6 +9,7 @@
 
 # ── CLI (formulas) ───────────────────────────────────────────────────────────
 brew "bat"         # `cat` with syntax highlighting
+brew "direnv"      # per-project env vars (.envrc) — hook in the zshrc
 brew "docker"      # CLI client (the GUI is the docker-desktop cask)
 brew "eza"         # modern `ls` (used by the zsh/aliases aliases)
 brew "fd"          # simple, fast `find`
@@ -25,6 +26,8 @@ brew "shellcheck"  # shell script linter
 brew "shfmt"       # formats shell scripts
 brew "stylua"      # formats Lua (WezTerm config)
 brew "tree"        # directory tree
+brew "tmux"        # terminal multiplexer (panes/tabs)
+brew "uv"          # python: versions, projects, venvs and pip in one tool
 brew "wget"        # HTTP(S) downloads
 brew "yq"          # YAML/JSON (like jq, but for YAML)
 brew "yt-dlp"      # video/audio downloads

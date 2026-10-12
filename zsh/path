@@ -54,7 +54,7 @@ _path_dirs=(
   "$_node_bin"                          # node/npm/npx (nvm: default alias or highest)
   /usr/local/opt/mysql-client/bin       # mysql-client (Homebrew, Intel Mac)
   /opt/homebrew/opt/mysql-client/bin    # mysql-client (Homebrew, Apple Silicon)
-  "$HOME/.local/bin"      # pipx apps (yt-dlp) · AppImage menus (obsidian, wezterm)
+  "$HOME/.local/bin"      # pipx/uv tools (yt-dlp) · AppImage menus (obsidian, wezterm)
   "$HOME/bin"             # personal scripts
   "$HOME/.opencode/bin"   # opencode CLI
   "$HOME/.bun/bin"        # bun ($BUN_INSTALL is exported above)

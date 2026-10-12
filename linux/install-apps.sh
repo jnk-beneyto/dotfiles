@@ -574,6 +574,7 @@ EOF
 
   htop)   pkg_install htop   || true ;;
   tree)   pkg_install tree   || true ;;
+  tmux)   pkg_install tmux   || true ;;
   # Fedora doesn't build 'ffmpeg' (it lives in RPM Fusion): there the package
   # is 'ffmpeg-free', which is what ships the ffmpeg binary in the repos.
   ffmpeg) install_first ffmpeg ffmpeg-free || true ;;

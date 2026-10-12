@@ -17,10 +17,10 @@
 #  - Offline nothing is destroyed: what's there is kept and you are warned.
 #
 # It also prepares the system: installs what the config needs in order not to fail
-# (git, zsh, eza, git-delta, fzf, oh-my-zsh, powerlevel10k, plugins, node/nvm)
-# and warns —without aborting the install— about any missing optional pieces
-# (Homebrew, JetBrains Mono font, VS Code). All via a package manager:
-# brew, apt, dnf or pacman.
+# (git, zsh, eza, git-delta, fzf, direnv, oh-my-zsh, powerlevel10k, plugins,
+# node/nvm, python/uv, compilers) and warns —without aborting the install— about
+# any missing optional pieces (Homebrew, JetBrains Mono font, VS Code). All via a
+# package manager: brew, apt, dnf or pacman.
 #
 # Detects the environment on its own (OS, distro and manager — see lib/platform.sh)
 # and at the end installs the platform apps: macOS → macos/Brewfile ·
@@ -106,6 +106,9 @@ export NVM_DIR="$HOME/.nvm"
 # Node version used by this dotfile (see zsh/zshrc). Override:
 #   DOTFILES_NODE_VERSION=v20.12.2 ./install.sh
 NODE_VERSION="${DOTFILES_NODE_VERSION:-v22.17.1}"
+# Python version installed with uv (installed below). Override:
+#   DOTFILES_PYTHON_VERSION=3.12 ./install.sh
+PYTHON_VERSION="${DOTFILES_PYTHON_VERSION:-3.13}"
 
 # Automatic environment detection: OS (Darwin/Linux), distro (/etc/os-release),
 # PM (brew/apt/dnf/pacman/zypper/apk), PM_NATIVE and SUDO.
@@ -238,6 +241,42 @@ pkg zsh  zsh   # the shell the whole stack uses
 pkg eza  eza   # all the zsh/aliases aliases (ls, ll, la, lt…)
 pkg delta git-delta # git's diff pager (gitconfig: core.pager = delta)
 pkg fzf  fzf   # oh-my-zsh's fzf plugin (CTRL-T/CTRL-R/ALT-C and completion)
+pkg direnv direnv # per-project env (.envrc) — the zshrc runs `direnv hook zsh`
+
+# Compilers and headers — npm/pip can't build native modules without them
+# (node-gyp, psycopg2, cryptography…). Debian/Ubuntu: build-essential ·
+# Fedora: gcc/gcc-c++/make · Arch: base-devel. macOS: the CommandLineTools
+# provide them (the § On a new-machine block installs those first).
+if ! have gcc || ! have g++ || ! have make; then
+  if [[ "$PM" != "brew" && -z "$SUDO" && "$(id -u)" -ne 0 ]]; then
+    warn "no sudo: cannot install the compilers (build-essential/base-devel); native npm/pip modules may fail to build"
+  else
+    case "${PM_NATIVE:-$PM}" in
+      apt)
+        info "installing build-essential (gcc, g++, make)"
+        if [[ "$APT_UPDATED" -eq 0 ]]; then $SUDO apt-get update -qq || true; APT_UPDATED=1; fi
+        $SUDO apt-get install -y build-essential || true ;;
+      dnf)
+        info "installing gcc, gcc-c++ and make (dnf)"
+        $SUDO dnf install -y gcc gcc-c++ make || true ;;
+      pacman)
+        info "installing base-devel (pacman)"
+        $SUDO pacman -S --noconfirm --needed base-devel || true ;;
+      zypper)
+        info "installing gcc, gcc-c++ and make (zypper)"
+        $SUDO zypper --non-interactive install gcc gcc-c++ make || true ;;
+      brew)
+        warn "run: xcode-select --install   (the CommandLineTools provide the compilers)" ;;
+      *)
+        pkg make make || true ;;
+    esac
+  fi
+fi
+if have gcc && have g++ && have make; then
+  ok "compilers ready"
+else
+  warn "no compilers (gcc/g++/make): native npm/pip modules may fail to build"
+fi
 
 # Homebrew: the zshrc uses it (nvm and mysql-client prefixes) and on macOS it's
 # the usual manager. We don't autoinstall it because its install asks for sudo.
@@ -312,7 +351,37 @@ else
   warn "no npm means no pnpm; install it manually: npm i -g pnpm  ·  https://pnpm.io/installation"
 fi
 
-# ── 5) JetBrains Mono font — used by ghostty/config (and p10k's icons) ────────
+# ── 5) python + uv — versions, projects, venvs and pip, all in one tool ───────
+# uv lands in ~/.local/bin (already on the PATH via zsh/path). It also installs
+# the python the projects use, the same way nvm does for node above.
+if ! have uv; then
+  if have brew; then
+    info "installing uv (brew)"
+    brew install uv || true
+  elif have curl; then
+    info "installing uv (official script → ~/.local/bin)"
+    curl -LsSf https://astral.sh/uv/install.sh | sh || true
+  else
+    warn "no brew and no curl: install uv by hand → https://docs.astral.sh/uv/getting-started/installation/"
+  fi
+fi
+# The bootstrap shell may not have ~/.local/bin on its PATH yet.
+UV_BIN="$(command -v uv || true)"
+[[ -z "$UV_BIN" && -x "$HOME/.local/bin/uv" ]] && UV_BIN="$HOME/.local/bin/uv"
+if [[ -n "$UV_BIN" ]]; then
+  ok "uv $("$UV_BIN" --version 2>/dev/null | awk '{print $2}')"
+  if "$UV_BIN" python find "$PYTHON_VERSION" >/dev/null 2>&1; then
+    ok "python $PYTHON_VERSION (uv)"
+  else
+    info "installing python $PYTHON_VERSION (uv python install)"
+    "$UV_BIN" python install "$PYTHON_VERSION" ||
+      warn "could not install python $PYTHON_VERSION; do it manually: uv python install $PYTHON_VERSION"
+  fi
+else
+  warn "uv not found; there's no python toolchain → https://docs.astral.sh/uv/getting-started/installation/"
+fi
+
+# ── 6) JetBrains Mono font — used by ghostty/config (and p10k's icons) ────────
 have_font_jb() {
   if have fc-list; then
     if fc-list 2>/dev/null | grep -qi "jetbrains"; then return 0; fi
@@ -372,7 +441,7 @@ if ! have_font_jb; then
   fi
 fi
 
-# ── 6) Terminals — warnings only: linking their config without the app is harmless ─
+# ── 7) Terminals — warnings only: linking their config without the app is harmless ─
 ghostty_present=0
 if have ghostty || [[ -x "/Applications/Ghostty.app/Contents/MacOS/ghostty" ]]; then
   ghostty_present=1
