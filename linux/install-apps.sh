@@ -6,7 +6,7 @@
 # Automatic detection (lib/platform.sh): OS + distro (/etc/os-release) + package
 # manager (apt · dnf · pacman · zypper · apk). Each id in the list is mapped
 # to whichever method applies on that distro:
-#   · distro package            · official repo (1Password, Brave, TablePlus…)
+#   · distro package            · official repo (1Password, TablePlus…)
 #   · flatpak (Flathub)         · AppImage from GitHub Releases
 #   · official script           · AUR (with yay/paru; if no helper, installs yay)
 # Idempotent: only installs what's missing. Never aborts on a one-off failure:
@@ -191,17 +191,42 @@ ensure_fuse() { # AppImage needs libfuse2 (Ubuntu 24.04: libfuse2t64)
   esac
 }
 
-# appimage_icon <appimage> <command> — extracts the app's OWN icon from inside
-# the AppImage (its `.DirIcon`, or the one named by its embedded .desktop) and
-# saves it next to the AppImages, echoing the saved path. This is what makes
-# Obsidian, Notion… show their real logo in the menu instead of a generic one:
-# the AppImage carries the icon, but installing it doesn't put it in the menu.
-appimage_icon() {
-  local appimg="$1" cmd="$2"
-  local dest="$IMG_ICON_DIR/$cmd"
+# An AppImage carries its own icon AND its own .desktop. The icon is what puts
+# the real logo in the menu (installing the AppImage alone doesn't); the
+# StartupWMClass of that .desktop is what ties the RUNNING window to the menu
+# entry, so the dock and Alt+Tab show the same logo instead of a generic icon.
+# Both are unpacked once and cached in $IMG_ICON_DIR ($cmd.meta holds the keys),
+# so a re-run never has to touch the AppImage again. Fills: APPICON ·
+# APPWMCLASS · APPCATEGORIES · APPCOMMENT · APPKEYWORDS · APPMIMETYPE.
 
-  if [[ -f "$dest.png" ]]; then echo "$dest.png"; return 0; fi
-  if [[ -f "$dest.svg" ]]; then echo "$dest.svg"; return 0; fi
+desktop_key() { # <file> <key> — value of a key in a .desktop file
+  sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1
+}
+
+desktop_list() { # <a;b> — freedesktop's list values must end in ';'
+  [[ -z "$1" || "$1" == *';' ]] && printf '%s' "$1" || printf '%s;' "$1"
+}
+
+appimage_read_desktop() { # <file> — reads the keys we forward to our entry
+  APPWMCLASS="$(desktop_key "$1" StartupWMClass)"
+  APPCATEGORIES="$(desktop_key "$1" Categories)"
+  APPCOMMENT="$(desktop_key "$1" Comment)"
+  APPKEYWORDS="$(desktop_key "$1" Keywords)"
+  APPMIMETYPE="$(desktop_key "$1" MimeType)"
+}
+
+appimage_desktop_data() { # <appimage> <command> — icon → $APPICON, keys → $APP*
+  local appimg="$1" cmd="$2"
+  local dest="$IMG_ICON_DIR/$cmd" cached="$IMG_ICON_DIR/$cmd.meta"
+  APPICON="" APPWMCLASS="" APPCATEGORIES="" APPCOMMENT="" APPKEYWORDS="" APPMIMETYPE=""
+
+  # Cached by a previous run: the icon and the keys are already there.
+  if [[ -f "$cached" && ( -f "$dest.png" || -f "$dest.svg" ) ]]; then
+    [[ -f "$dest.png" ]] && APPICON="$dest.png"
+    [[ -f "$dest.svg" ]] && APPICON="$dest.svg"
+    appimage_read_desktop "$cached"
+    return 0
+  fi
 
   # `--appimage-extract` unpacks the payload with the runtime's own extractor
   # (no FUSE needed); it writes ./squashfs-root in the current directory.
@@ -213,10 +238,11 @@ appimage_icon() {
   if [[ ! -d "$root" ]]; then rm -rf "$tmp"; return 1; fi
 
   # The embedded .desktop names the icon (Icon=obsidian → obsidian.png/svg).
-  local name="" f
+  local emb="" f name=""
   for f in "$root"/*.desktop; do
     [[ -f "$f" ]] || continue
-    name="$(grep -m1 '^Icon=' "$f" 2>/dev/null | cut -d= -f2- || true)"
+    emb="$f"
+    name="$(desktop_key "$f" Icon)"
     [[ -n "$name" ]] && break
   done
   name="${name##*/}"; name="${name%.png}"; name="${name%.svg}"; name="${name%.xpm}"
@@ -241,32 +267,39 @@ appimage_icon() {
     fi
   fi
 
-  local out=""
+  mkdir -p "$IMG_ICON_DIR"
   if [[ -n "$src" && -n "$ext" ]]; then
-    mkdir -p "$IMG_ICON_DIR"
-    cp -f "$src" "$dest.$ext" 2>/dev/null && out="$dest.$ext"
+    cp -f "$src" "$dest.$ext" 2>/dev/null && APPICON="$dest.$ext"
+  fi
+  if [[ -n "$emb" ]]; then
+    cp -f "$emb" "$cached" 2>/dev/null && appimage_read_desktop "$cached"
   fi
   rm -rf "$tmp"
-  [[ -n "$out" ]] && echo "$out"
+  return 0
 }
 
 # install_desktop_entry <appimage> <command> <Visible name> — writes the menu
 # entry. The icon is an ABSOLUTE path (freedesktop allows it) so it shows up on
-# any DE/theme without needing an icon-cache refresh.
+# any DE/theme without needing an icon-cache refresh; StartupWMClass is what
+# makes the dock match the window with this entry.
 install_desktop_entry() {
   local target="$1" cmd="$2" pretty="$3"
-  local icon
-  icon="$(appimage_icon "$target" "$cmd" || true)"
+  appimage_desktop_data "$target" "$cmd" || true
+  local cats="${APPCATEGORIES:-Utility;}"
   mkdir -p "$DESK_DIR"
-  cat > "$DESK_DIR/$cmd.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=$pretty
-Exec=$target %U
-Icon=${icon:-$cmd}
-Categories=Utility;
-Terminal=false
-EOF
+  {
+    echo "[Desktop Entry]"
+    echo "Type=Application"
+    echo "Name=$pretty"
+    [[ -n "$APPCOMMENT" && "$APPCOMMENT" != "$pretty" ]] && echo "Comment=$APPCOMMENT"
+    echo "Exec=$target %U"
+    echo "Icon=${APPICON:-$cmd}"
+    [[ -n "$APPWMCLASS" ]] && echo "StartupWMClass=$APPWMCLASS"
+    echo "Categories=$(desktop_list "$cats")"
+    [[ -n "$APPKEYWORDS" ]] && echo "Keywords=$(desktop_list "$APPKEYWORDS")"
+    [[ -n "$APPMIMETYPE" ]] && echo "MimeType=$(desktop_list "$APPMIMETYPE")"
+    echo "Terminal=false"
+  } > "$DESK_DIR/$cmd.desktop"
   have update-desktop-database && update-desktop-database "$DESK_DIR" >/dev/null 2>&1 || true
 }
 
@@ -328,8 +361,6 @@ flatpak_app() { # <flatpak-id> <Visible name>
     || { warn "could not install $2 from Flathub"; return 1; }
   ok "$2 installed (flatpak)"
 }
-
-desktop_hint() { ok "$1"; }   # apps that aren't installed (guidance only)
 
 # ── The apps ─────────────────────────────────────────────────────────────────
 # One id from linux/apps.txt → its installation on this distro.
@@ -393,24 +424,6 @@ EOF
       flatpak_app org.telegram.desktop Telegram
     fi ;;
 
-  discord)
-    case "$PM_D" in
-      apt)    if have_pkg discord; then ok "Discord: already there"
-              # Note: the API requires lowercase 'platform=linux' and 'arch'
-              # (with capital 'Linux' and no arch it returns 404).
-              elif dl "https://discord.com/api/download?platform=linux&format=deb&arch=x86_64" /tmp/discord.deb; then
-                $SUDO apt-get install -y /tmp/discord.deb && ok "Discord installed" \
-                  || warn "could not install the Discord .deb"
-              else warn "Discord: manual download → https://discord.com/linux"; fi ;;
-      dnf)    if have_pkg discord; then ok "Discord: already there"
-              elif dl "https://discord.com/api/download?platform=linux&format=rpm&arch=x86_64" /tmp/discord.rpm; then
-                $SUDO dnf install -y /tmp/discord.rpm && ok "Discord installed" \
-                  || warn "could not install the Discord .rpm"
-              else warn "Discord: manual download → https://discord.com/linux"; fi ;;
-      pacman) pkg_install discord || aur_install discord ;;
-      *)      warn "Discord: https://discord.com/linux" ;;
-    esac ;;
-
   google-chrome)
     case "$PM_D" in
       apt)    if ! have google-chrome; then
@@ -426,42 +439,6 @@ EOF
       pacman) aur_install google-chrome || aur_install google-chrome-stable || true ;;
       *)      warn "Google Chrome: https://google.com/chrome" ;;
     esac ;;
-
-  brave-browser)
-    case "$PM_D" in
-      apt)
-        if [[ ! -f /etc/apt/sources.list.d/brave-browser-release.list ]]; then
-          info "configuring the official Brave repo"
-          $SUDO curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-            https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" \
-            | $SUDO tee /etc/apt/sources.list.d/brave-browser-release.list >/dev/null
-          apt_repo_added
-        fi
-        pkg_install brave-browser ;;
-      dnf)
-        # The .repo goes straight into yum.repos.d: the old URL with the
-        # 'x86_64/' prefix no longer exists and 'dnf config-manager' changed in dnf5.
-        if [[ ! -f /etc/yum.repos.d/brave-browser-rpm.repo ]]; then
-          info "configuring the official Brave repo"
-          dl "https://brave-browser-rpm-release.s3.brave.com/brave-browser-rpm.repo" \
-             /tmp/brave-browser-rpm.repo \
-            && $SUDO cp /tmp/brave-browser-rpm.repo /etc/yum.repos.d/brave-browser-rpm.repo \
-            || { warn "Brave: could not add the repo → https://brave.com/linux"; return 1; }
-        fi
-        pkg_install brave-browser ;;
-      pacman) aur_install brave-bin || warn "Brave: https://brave.com/linux" ;;
-      *)      warn "Brave: https://brave.com/linux" ;;
-    esac ;;
-
-  notion)   # UNOFFICIAL client (community repack, maintained daily)
-    local u; u="$(github_appimage_url jcorbalanm/notion-appimage)"
-    [[ -n "$u" ]] && install_appimage "$u" Notion notion "Notion" \
-      || warn "Notion: no AppImage for $ARCH → use the PWA (notion.so in Chrome)" ;;
-
-  whatsapp)
-    # There's no official WhatsApp client on Linux (neither Flathub nor snap).
-    desktop_hint "WhatsApp: no official client → PWA: web.whatsapp.com in Chrome → ⋮ → Install WhatsApp" ;;
 
   docker)
     if ! have docker; then
@@ -503,14 +480,6 @@ EOF
       pkg_install gh || warn "GitHub CLI: https://github.com/cli/cli#installation"
     fi ;;
 
-  ollama)
-    if have ollama; then ok "Ollama: already there"
-    else
-      info "installing Ollama (official script)"
-      curl -fsSL https://ollama.com/install.sh | sh \
-        && ok "Ollama installed" || warn "Ollama: could not → https://ollama.com/download"
-    fi ;;
-
   tableplus)
     case "$PM_D" in
       apt)
@@ -535,48 +504,6 @@ EOF
         pkg_install tableplus ;;
       pacman) aur_install tableplus || warn "TablePlus: https://www.tableplus.com/download/linux" ;;
       *)      warn "TablePlus: https://www.tableplus.com/download/linux" ;;
-    esac ;;
-
-  vscode)
-    case "$PM_D" in
-      apt)
-        if [[ ! -f /etc/apt/sources.list.d/microsoft-prod.list ]]; then
-          local deb="packages-microsoft-prod.deb"
-          info "configuring the official Microsoft repo"
-          if dl "https://packages.microsoft.com/config/${DISTRO_ID:-ubuntu}/${DISTRO_VERSION:-22.04}/$deb" "/tmp/$deb" &&
-             $SUDO apt-get install -y "/tmp/$deb"; then
-            apt_repo_added
-          else
-            # The distro is newer than Microsoft's repos (or they don't
-            # support it yet): the direct .deb always works; updates are
-            # handled afterwards by VS Code itself.
-            info "Microsoft repo: no config for ${DISTRO_ID} ${DISTRO_VERSION} → direct .deb"
-            dl "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
-               "/tmp/code-directo.deb" &&
-              $SUDO apt-get install -y /tmp/code-directo.deb ||
-              { warn "VS Code: could not install → https://code.visualstudio.com"; return 1; }
-          fi
-        fi
-        pkg_install code || warn "VS Code: could not install → https://code.visualstudio.com" ;;
-      dnf)
-        local rpm="packages-microsoft-prod.rpm"
-        if [[ ! -f "/etc/yum.repos.d/$rpm" ]]; then
-          info "configuring the official Microsoft repo"
-          if dl "https://packages.microsoft.com/config/${DISTRO_ID:-fedora}/${DISTRO_VERSION:-40}/$rpm" "/tmp/$rpm" &&
-             $SUDO dnf install -y "/tmp/$rpm"; then
-            :   # repo added; dnf refreshes metadata only on install
-          else
-            # Same case as apt: version with no Microsoft config → direct .rpm.
-            info "Microsoft repo: no config for ${DISTRO_ID} ${DISTRO_VERSION} → direct .rpm"
-            dl "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" \
-               "/tmp/code-directo.rpm" &&
-              $SUDO dnf install -y /tmp/code-directo.rpm ||
-              { warn "VS Code: could not install → https://code.visualstudio.com"; return 1; }
-          fi
-        fi
-        pkg_install code ;;
-      pacman) pkg_install code ;;
-      *)      warn "VS Code: https://code.visualstudio.com/docs/?dv=linux" ;;
     esac ;;
 
   ghostty)
@@ -623,33 +550,6 @@ EOF
     [[ -n "$u" ]] && install_appimage "$u" WezTerm wezterm "WezTerm" \
       || warn "WezTerm: no AppImage for $ARCH → https://wezterm.org/install" ;;
 
-  tiling)
-    # Rectangle doesn't exist on Linux: tiling comes with the desktop.
-    local de; de="$(echo "${XDG_CURRENT_DESKTOP:-}${DESKTOP_SESSION:-}" | tr '[:upper:]' '[:lower:]')"
-    case "$de" in
-      *gnome*|*ubuntu*)
-        desktop_hint "Tiling (GNOME): native with Super+drag / Super+← → · recommended extension: Tiling Assistant → https://extensions.gnome.org/extension/7341/tiling-assistant/" ;;
-      *kde*)
-        desktop_hint "Tiling (KDE): KWin already ships shortcuts: Meta+←/→ and Super+drag" ;;
-      *)
-        desktop_hint "Tiling: gTile (GNOME) · Krohnkite (KDE) · i3/sway if you want pure tiling" ;;
-    esac ;;
-
-  ulauncher) # Alfred-style launcher (closest equivalent: Alfred isn't on Linux)
-    if have ulauncher; then ok "Ulauncher: already there"
-    else
-      case "$PM_D" in
-        apt)    local u; u="$(github_asset_url Ulauncher/ulauncher '_all\.deb$')"
-                [[ -n "$u" ]] && dl "$u" /tmp/ulauncher.deb \
-                  && $SUDO apt-get install -y /tmp/ulauncher.deb && ok "Ulauncher installed" \
-                  || warn "Ulauncher: could not install → https://github.com/Ulauncher/ulauncher/releases" ;;
-        dnf)    pkg_install ulauncher \
-                  || warn "Ulauncher: https://github.com/Ulauncher/ulauncher/releases" ;;
-        pacman) aur_install ulauncher || warn "Ulauncher: https://aur.archlinux.org/packages/ulauncher" ;;
-        *)      warn "Ulauncher: official .deb on GitHub releases → https://github.com/Ulauncher/ulauncher/releases" ;;
-      esac
-    fi ;;
-
   balenaetcher)
     case "$PM_D" in
       apt)
@@ -671,11 +571,6 @@ EOF
       pacman) aur_install balena-etcher || warn "Etcher: https://etcher.balena.io" ;;
       *)      warn "Etcher: https://etcher.balena.io" ;;
     esac ;;
-
-  unzip)
-    pkg_install unzip || true
-    install_first 7zip p7zip-full p7zip || true
-    pkg_available unar && pkg_install unar || true ;;
 
   htop)   pkg_install htop   || true ;;
   tree)   pkg_install tree   || true ;;
