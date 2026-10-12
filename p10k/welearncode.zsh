@@ -48,17 +48,20 @@
 
   typeset -g POWERLEVEL9K_PROMPT_CHAR='%F{#8af46b}❯%f '
 
-  # ── Icons (standard Unicode, no Nerd Font required) ────────────────────────
+  # ── Icons ──────────────────────────────────────────────────────────────────
   typeset -g POWERLEVEL9K_DIR_VISUAL_IDENTIFIER_EXPANSION=
 
   # No stashes: by removing `git-stash` from the hooks, gitstatusd neither
   # computes nor shows it (and the prompt is a tad faster).
   typeset -g POWERLEVEL9K_VCS_GIT_HOOKS=(vcs-detect-changes git-untracked git-aheadbehind git-remotebranch git-tagname)
 
-  # "Host" icons (GitHub, GitLab, …): they are Nerd Font glyphs that would be
-  # white squares in JetBrains Mono, and the image does not show them.
+  # Host icon: only GitHub shows one. It's the Nerd Font glyph \uF113, provided
+  # by the JetBrainsMono Nerd Font that install.sh installs (WezTerm also falls
+  # back to Symbols Nerd Font Mono, so it always renders). p10k shows it only
+  # when the repo's origin points to github.com; any other host falls back to
+  # VCS_GIT_ICON, which stays empty to keep the prompt minimal.
   typeset -g POWERLEVEL9K_VCS_GIT_ICON=
-  typeset -g POWERLEVEL9K_VCS_GIT_GITHUB_ICON=
+  typeset -g POWERLEVEL9K_VCS_GIT_GITHUB_ICON='%F{#9ca1a1}\uF113%f '
   typeset -g POWERLEVEL9K_VCS_GIT_GITLAB_ICON=
   typeset -g POWERLEVEL9K_VCS_GIT_BITBUCKET_ICON=
   typeset -g POWERLEVEL9K_VCS_GIT_AZURE_ICON=
